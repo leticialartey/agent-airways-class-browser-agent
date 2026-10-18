@@ -46,21 +46,21 @@ def main():
     result = try_tool({"field": "checked_bag", "checked": True})
     check("Tool reports failure when the checkbox is not on the current screen", result["ok"] == False)
 
-    # Pause so you can click through the site by hand in the Playwright window.
+    # Pause so a person can click through the site in the Playwright window.
     print()
-    input("In the Playwright browser window, search for a flight, choose a flight and a seat, "
-          "and continue until you see the passenger details screen. Then press Enter here... ")
+    input("In the Playwright browser window, search for a flight, choose AA101 and seat 1A, "
+          "and continue to the passenger details screen. Do not tick any boxes. "
+          "Then press Enter here... ")
 
     bag = page.locator("#checkedBag")
+    priority = page.locator("#priorityBoarding")
 
-    # Test 2: check the bag box, then confirm with ur own separate read of the page.
+    # Test 2: check the bag box, then confirm with our own separate read of the page.
     print("\n=== Test 2: set checked_bag to True ===")
     result = try_tool({"field": "checked_bag", "checked": True})
     actual = bag.is_checked()
     print("INDEPENDENT CHECK: the browser says checkedBag is", actual)
     check("checked_bag is True on the page", result["ok"] == True and actual == True)
-    
-    # Save a picture of the page as evidence, then pause so a person can see it.
     page.screenshot(path="evidence_bag_checked.png")
     page.wait_for_timeout(2000)
 
@@ -88,6 +88,41 @@ def main():
     after = bag.is_checked()
     print("INDEPENDENT CHECK: checkedBag before =", before, ", after =", after)
     check("Text 'yes' is refused and the page is unchanged", result["ok"] == False and before == after)
+
+    # Test 6: priority boarding, on then off.
+    print("\n=== Test 6: set priority_boarding to True, then False ===")
+    result = try_tool({"field": "priority_boarding", "checked": True})
+    actual = priority.is_checked()
+    print("INDEPENDENT CHECK: the browser says priorityBoarding is", actual)
+    check("priority_boarding is True on the page", result["ok"] == True and actual == True)
+    page.wait_for_timeout(1500)
+    result = try_tool({"field": "priority_boarding", "checked": False})
+    actual = priority.is_checked()
+    print("INDEPENDENT CHECK: the browser says priorityBoarding is", actual)
+    check("priority_boarding is False on the page", result["ok"] == True and actual == False)
+
+    # Pause again so a person can move to the review screen.
+    print()
+    input("Now type a pretend name (Alex Student) and email (alex@example.com), "
+          "click 'Continue to review', and stop on the review screen. "
+          "Do not tick the confirm box or click Confirm. Then press Enter here... ")
+
+    confirm = page.locator("#confirmDetails")
+
+    # Test 7: the confirm box on the review screen. Ticking it must NOT submit the reservation.
+    print("\n=== Test 7: set confirm_details to True, then False (must not submit) ===")
+    result = try_tool({"field": "confirm_details", "checked": True})
+    actual = confirm.is_checked()
+    still_on_review = "#confirmation" not in page.url
+    print("INDEPENDENT CHECK: confirmDetails is", actual, ", page URL is", page.url)
+    check("confirm_details is True and the reservation was not submitted",
+          result["ok"] == True and actual == True and still_on_review)
+    page.screenshot(path="evidence_confirm_checked.png")
+    page.wait_for_timeout(2000)
+    result = try_tool({"field": "confirm_details", "checked": False})
+    actual = confirm.is_checked()
+    print("INDEPENDENT CHECK: the browser says confirmDetails is", actual)
+    check("confirm_details is False on the page", result["ok"] == True and actual == False)
 
     print("\n=== Summary:", passed, "passed,", failed, "failed ===")
     input("Press Enter to close the browser... ")

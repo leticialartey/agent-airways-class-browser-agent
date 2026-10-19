@@ -1,6 +1,7 @@
 """
 Test program for Team 02's set_checkbox tool.
-Run it from the project folder with:  python test_set_checkbox.py
+Run it from the main repository folder with:  python3 -m team_tools.test_set_checkbox
+(on some computers, use python instead of python3)
 """
 
 import json
